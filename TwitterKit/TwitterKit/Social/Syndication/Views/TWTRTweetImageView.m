@@ -62,7 +62,7 @@
         self.layer.borderColor = [TWTRColorUtil borderGrayColor].CGColor;
         self.layer.borderWidth = 0.5;
         self.clipsToBounds = YES;
-        self.contentMode = UIViewContentModeScaleAspectFill;
+        self.contentMode = UIViewContentModeScaleAspectFit;
         self.backgroundColor = [TWTRColorUtil faintGrayColor];
         self.translatesAutoresizingMaskIntoConstraints = NO;
         [self setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisVertical];
