@@ -207,43 +207,46 @@ NSString *const TWTRSocialAppProviderActionSheetCompletionKey = @"TWTRAppleSocia
     TWTRParameterAssertOrReturn(completion);
 
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIActionSheet *sheet = [self actionSheet];
+        UIAlertController *sheet = [self actionSheet];
         objc_setAssociatedObject(sheet, (__bridge const void *)(TWTRSocialAppProviderActionSheetCompletionKey), completion, OBJC_ASSOCIATION_COPY_NONATOMIC);
 
         // This shows the picker in the middle of the screen. It doesn't look good,
         // and the UIAlertController on iOS 8 would be the solution for this, but we
         // don't officially support iPad at this time so this will do.
-        [sheet showInView:[TWTRUtils topViewController].view];
+//        [sheet showInView:[TWTRUtils topViewController].view];
     });
 }
 
-- (UIActionSheet *)actionSheet
+- (UIAlertController *)actionSheet
 {
-    UIActionSheet *sheet = [UIActionSheet new];
-    sheet.delegate = self;
-    sheet.actionSheetStyle = UIActionSheetStyleBlackTranslucent;
+    UIAlertController *sheet = [UIAlertController alertControllerWithTitle:@"" message:@"" preferredStyle:UIAlertControllerStyleActionSheet];
+    __weak typeof(self) weakSelf = self;
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", nil) style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        [weakSelf alertHandleCancel:sheet];
+    }];
+    [sheet addAction:cancelAction];
+    
     for (ACAccount *account in self.accounts) {
         NSString *title = [NSString stringWithFormat:@"@%@", account.username];
-        [sheet addButtonWithTitle:title];
+        UIAlertAction *otherAction = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            NSInteger index = [sheet.actions indexOfObject:action];
+            if (index >=0) {
+                [weakSelf handleOther:sheet andButtonIndex:index];
+            }
+        }];
+        [sheet addAction:otherAction];
     }
-    sheet.cancelButtonIndex = [sheet addButtonWithTitle:NSLocalizedString(@"Cancel", nil)];
 
     return sheet;
 }
 
 #pragma mark - UIActionSheet delegate
-
-- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-    if (buttonIndex == [actionSheet cancelButtonIndex]) {
-        [self actionSheetCancel:actionSheet];
-    } else {
-        TWTRAuthenticationProviderCompletion completion = objc_getAssociatedObject(actionSheet, (__bridge const void *)(TWTRSocialAppProviderActionSheetCompletionKey));
-        [self getAuthTokenWithAccount:[self accounts][(NSUInteger)buttonIndex] completion:completion];
-    }
+- (void) handleOther: (UIAlertController *)actionSheet andButtonIndex:(NSInteger)buttonIndex {
+    TWTRAuthenticationProviderCompletion completion = objc_getAssociatedObject(actionSheet, (__bridge const void *)(TWTRSocialAppProviderActionSheetCompletionKey));
+    [self getAuthTokenWithAccount:[self accounts][(NSUInteger)buttonIndex] completion:completion];
 }
 
-- (void)actionSheetCancel:(UIActionSheet *)actionSheet
+- (void)alertHandleCancel:(UIAlertController *)actionSheet
 {
     TWTRAuthenticationProviderCompletion completion = objc_getAssociatedObject(actionSheet, (__bridge const void *)(TWTRSocialAppProviderActionSheetCompletionKey));
     completion(nil, [NSError errorWithDomain:TWTRLogInErrorDomain code:TWTRLogInErrorCodeCancelled userInfo:@{ NSLocalizedDescriptionKey: @"User cancelled authentication." }]);
