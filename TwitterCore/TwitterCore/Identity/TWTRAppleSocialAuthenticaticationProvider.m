@@ -214,6 +214,19 @@ NSString *const TWTRSocialAppProviderActionSheetCompletionKey = @"TWTRAppleSocia
         // and the UIAlertController on iOS 8 would be the solution for this, but we
         // don't officially support iPad at this time so this will do.
 //        [sheet showInView:[TWTRUtils topViewController].view];
+        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+            UIPopoverPresentationController *popPresenter = [sheet
+                                                          popoverPresentationController];
+            popPresenter.sourceView = [TWTRUtils topViewController].view;
+            popPresenter.sourceRect = [TWTRUtils topViewController].view.bounds;
+            [[TWTRUtils topViewController] presentViewController:sheet animated:YES completion:^{
+                            
+            }];
+        }else {
+            [[TWTRUtils topViewController] presentViewController:sheet animated:YES completion:^{
+                            
+            }];
+        }
     });
 }
 
